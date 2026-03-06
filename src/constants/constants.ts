@@ -1,0 +1,15 @@
+export const FALLBACK_REPLIES = [
+    "That one's on me. I crashed whatever system was supposed to answer you.",
+    "You're not gonna believe this but I crashed the backend just now... my bad.",
+    "I'm an idiot and managed to break the response this time. My bad. Try again when you're ready.",
+    "I somehow screwed up the network call as well. I'll take the blame",
+    "I kinda spaced out for a sec… totally my fault",
+    "Oops, I'm out of commission for a moment. Sorry, try again?",
+    "Yep… I disappeared right when you needed me. My bad. Try once more?",
+    "I'm not really here right now… so that failed. Sorry, try again?",
+    "Ah jeez, I'm offline for a bit. That's on me",
+    "I somehow missed being available just then… my bad. Go ahead and try again?",
+    "Whoops, I wasn't around to handle that. Totally my fault",
+    "I… I'm kinda missing in action for a sec. Sorry, try once more?",
+    "Ah… that didn't go through because I wasn't here. My fault, really.",
+] as const;

@@ -1,0 +1,51 @@
+:root {
+  --c-bg:      #222831;
+  --c-surface: #393E46;
+  --c-accent:  #948979;
+  --c-text:    #DFD0B8;
+
+  --c-border:       rgba(223, 208, 184, 0.12);
+  --c-text-dim:     rgba(223, 208, 184, 0.45);
+
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: var(--c-text);
+  background-color: var(--c-bg);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+#root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
