@@ -6,9 +6,11 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const apiTarget = env.VITE_API_URL ?? 'http://localhost:8000';
   const port = Number(env.VITE_PORT) || 5173;
-
+  const base = '/scapegoat/';
+  
   return {
     plugins: [react()],
+    base,
     server: {
       port,
       proxy: {
