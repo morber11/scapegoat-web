@@ -1,0 +1,8 @@
+services:
+  web:
+    build: .
+    ports:
+      - "81:81"
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-}
+    restart: unless-stopped
