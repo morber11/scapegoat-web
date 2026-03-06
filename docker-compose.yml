@@ -1,6 +1,8 @@
 services:
   web:
     build: .
+    env_file:
+      - .env
     ports:
       - "81:81"
     environment:
