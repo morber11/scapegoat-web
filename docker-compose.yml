@@ -4,7 +4,7 @@ services:
     env_file:
       - .env
     ports:
-      - "81:81"
+      - "5174:5174"
     environment:
       - VITE_API_URL=${VITE_API_URL:-}
     restart: unless-stopped
