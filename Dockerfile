@@ -7,8 +7,7 @@ ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_APP_ENV=$VITE_APP_ENV
 
 COPY package*.json ./
-RUN --mount=type=cache,target=/app/node_modules \
-    npm ci --include=dev
+RUN npm ci
 
 COPY . .
 RUN npm run build
