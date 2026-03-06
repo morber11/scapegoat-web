@@ -10,5 +10,5 @@ RUN npm run build
 FROM nginx:stable-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 # normally 80, but we want to avoid conflicts with other services
-EXPOSE 81 
+# EXPOSE 81 
 CMD ["nginx", "-g", "daemon off;"]
