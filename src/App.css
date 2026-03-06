@@ -327,3 +327,45 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+.error-boundary {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.error-boundary__title {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--c-text);
+}
+
+.error-boundary__message {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--c-text-dim);
+  max-width: 40ch;
+}
+
+.error-boundary__button {
+  background: transparent;
+  border: 1px solid var(--c-accent);
+  color: var(--c-accent);
+  font-size: 0.85rem;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
+}
+
+.error-boundary__button:hover {
+  border-color: var(--c-text);
+  color: var(--c-text);
+}
