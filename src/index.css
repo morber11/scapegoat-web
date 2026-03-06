@@ -1,11 +1,11 @@
 :root {
-  --c-bg:      #222831;
+  --c-bg: #222831;
   --c-surface: #393E46;
-  --c-accent:  #948979;
-  --c-text:    #DFD0B8;
+  --c-accent: #948979;
+  --c-text: #DFD0B8;
 
-  --c-border:       rgba(223, 208, 184, 0.12);
-  --c-text-dim:     rgba(223, 208, 184, 0.45);
+  --c-border: rgba(223, 208, 184, 0.12);
+  --c-text-dim: rgba(223, 208, 184, 0.45);
 
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

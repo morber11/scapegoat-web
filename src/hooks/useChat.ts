@@ -118,7 +118,7 @@ export function useChat(): UseChatReturn {
 
             dispatch({ type: 'SEND_START', userMessage });
             messagesRef.current = [...historySnapshot, userMessage];
-    
+
             saveToStorage(messagesRef.current);
 
             try {

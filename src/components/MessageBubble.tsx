@@ -41,21 +41,19 @@ export function MessageBubble({ message, animate, onAnimationDone }: Props) {
 
   return (
     <div
-      className={`message-wrapper ${
-        isUser ? 'message-wrapper--user' : 'message-wrapper--assistant'
-      }`}
+      className={`message-wrapper ${isUser ? 'message-wrapper--user' : 'message-wrapper--assistant'
+        }`}
     >
       <span className="message-label">{isUser ? 'You' : 'Scapegoat'}</span>
       <div
-        className={`message-bubble ${
-          isUser ? 'message-bubble--user' : 'message-bubble--assistant'
-        }`}
+        className={`message-bubble ${isUser ? 'message-bubble--user' : 'message-bubble--assistant'
+          }`}
       >
         <p className="message-content">
           {text}
           {isCursorVisible && (
-            <span className="message-cursor" aria-hidden="true"> 
-              ▋{/* U+258B : LEFT FIVE EIGHTHS BLOCK */} 
+            <span className="message-cursor" aria-hidden="true">
+              ▋{/* U+258B : LEFT FIVE EIGHTHS BLOCK */}
             </span>
           )}
         </p>
