@@ -1,7 +1,7 @@
 import { useCallback, useReducer, useRef } from 'react';
-import { sendChatMessage } from '../api/chatApi';
+import { sendChatMessage, ChatApiError } from '../api/chatApi';
 import type { ChatMessage } from '../types/chat';
-import { FALLBACK_REPLIES } from '../constants/constants';
+import { FALLBACK_REPLIES, RATE_LIMIT_FALLBACK_REPLIES } from '../constants/constants';
 
 const STORAGE_KEY = 'scapegoat_chat_v1';
 const STORAGE_VERSION = 1;
@@ -44,6 +44,7 @@ interface State {
 
 
 let lastFallback: string | null = null;
+let lastRateLimitFallback: string | null = null;
 
 function randomFallback(): string {
     let reply: string;
@@ -54,6 +55,38 @@ function randomFallback(): string {
     lastFallback = reply;
 
     return reply;
+}
+
+function randomRateLimitFallback(): string {
+    let reply: string;
+    do {
+        reply = RATE_LIMIT_FALLBACK_REPLIES[Math.floor(Math.random() * RATE_LIMIT_FALLBACK_REPLIES.length)];
+    } while (reply === lastRateLimitFallback && RATE_LIMIT_FALLBACK_REPLIES.length > 1);
+
+    lastRateLimitFallback = reply;
+
+    return reply;
+}
+
+// roughly guess the users typing style and transform the prompts to match
+function styleFallback(reply: string, messages: ChatMessage[]): string {
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content ?? '';
+    let styled = reply;
+
+    const letterCounts = { lower: 0, upper: 0 };
+    for (const ch of lastUser) {
+        if (/[a-z]/.test(ch)) letterCounts.lower++;
+        else if (/[A-Z]/.test(ch)) letterCounts.upper++;
+    }
+    if (letterCounts.lower > letterCounts.upper) {
+        styled = styled.toLowerCase();
+    }
+
+    if (lastUser.trim().endsWith('.') && !/[.!?]$/.test(styled)) {
+        styled = styled + '.';
+    }
+
+    return styled;
 }
 
 type Action =
@@ -131,7 +164,15 @@ export function useChat(): UseChatReturn {
             } catch (err) {
                 console.error('[Scapegoat] API error:', err);
 
-                const fallback = createMessage('assistant', randomFallback());
+                let rawReply: string;
+                if (err instanceof ChatApiError && err.status === 429) {
+                    rawReply = randomRateLimitFallback();
+                } else {
+                    rawReply = randomFallback();
+                }
+
+                const styled = styleFallback(rawReply, historySnapshot);
+                const fallback = createMessage('assistant', styled);
                 dispatch({ type: 'SEND_SUCCESS', assistantMessage: fallback });
                 messagesRef.current = [...messagesRef.current, fallback];
 

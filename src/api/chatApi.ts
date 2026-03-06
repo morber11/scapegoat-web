@@ -1,6 +1,16 @@
 import axios, { AxiosError } from 'axios';
 import type { ApiChatResponse, ApiMessage, ChatMessage } from '../types/chat';
 
+export class ChatApiError extends Error {
+  status?: number;
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = 'ChatApiError';
+    this.status = status;
+  }
+}
+
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? '',
   headers: { 'Content-Type': 'application/json' },
@@ -38,11 +48,13 @@ export async function sendChatMessage(
   } catch (err) {
     if (axios.isAxiosError(err)) {
       const detail = (err as AxiosError<{ detail?: string }>).response?.data?.detail;
-      throw new Error(
+      const status = err.response?.status;
+      const message =
         typeof detail === 'string'
           ? detail
-          : `server error (${err.response?.status ?? 'network'})`,
-      );
+          : `server error (${status ?? 'network'})`;
+
+      throw new ChatApiError(message, status);
     }
     throw err;
   }
