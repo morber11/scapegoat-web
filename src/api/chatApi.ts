@@ -37,13 +37,14 @@ function extractReply(data: ApiChatResponse): string {
 export async function sendChatMessage(
     content: string,
     history: ChatMessage[],
+    signal?: AbortSignal,
 ): Promise<{ reply: string }> {
     const messages = buildMessages(content, history);
 
     try {
         const { data } = await apiClient.post<ApiChatResponse>('/api/v1/chat', {
             messages,
-        });
+        }, { signal });
         return { reply: extractReply(data) };
     } catch (err) {
         if (axios.isAxiosError(err)) {

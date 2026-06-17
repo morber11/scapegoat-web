@@ -4,6 +4,12 @@ import type { ChatMessage } from '../types/chat';
 import { FALLBACK_REPLIES, RATE_LIMIT_FALLBACK_REPLIES } from '../constants/constants';
 import { styleFallback } from '../utils/styleFallback';
 
+const RaceStatus = {
+    Ok: 'ok',
+    Error: 'error',
+    Timeout: 'timeout',
+} as const;
+
 const STORAGE_KEY = 'scapegoat_chat_v1';
 const STORAGE_VERSION = 1;
 
@@ -134,18 +140,34 @@ export function useChat(): UseChatReturn {
 
             saveToStorage(messagesRef.current);
 
-            try {
-                const response = await sendChatMessage(content, historySnapshot);
-                const assistantMessage = createMessage('assistant', response.reply);
+            const controller = new AbortController();
+
+            // abort after fuzzy 4 - 6 seconds and use fallback messages, much snappier
+            const result = await Promise.race([
+                sendChatMessage(content, historySnapshot, controller.signal)
+                    .then((r) => ({ status: RaceStatus.Ok, reply: r.reply }))
+                    .catch((err) => ({ status: RaceStatus.Error, err })),
+                new Promise<{ status: typeof RaceStatus.Timeout }>((resolve) =>
+                    setTimeout(() => {
+                        resolve({ status: RaceStatus.Timeout });
+                        controller.abort();
+                    }, 4000 + Math.random() * 2000),
+                ),
+            ]);
+
+            if (result.status === RaceStatus.Ok) {
+                const assistantMessage = createMessage('assistant', result.reply);
                 dispatch({ type: 'SEND_SUCCESS', assistantMessage });
                 messagesRef.current = [...messagesRef.current, assistantMessage];
 
                 saveToStorage(messagesRef.current);
-            } catch (err) {
-                console.error('[Scapegoat] API error:', err);
+            } else {
+                console.error('[Scapegoat] API error:', result.status === RaceStatus.Timeout ? 'timed out' : result.err);
 
                 let rawReply: string;
-                if (err instanceof ChatApiError && err.status === 429) {
+                if (result.status === RaceStatus.Error 
+                    && result.err instanceof ChatApiError 
+                    && result.err.status === 429) {
                     rawReply = randomRateLimitFallback();
                 } else {
                     rawReply = randomFallback();
