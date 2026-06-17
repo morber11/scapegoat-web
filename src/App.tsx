@@ -40,7 +40,7 @@ function App() {
             </div>
           </div>
           {messages.length > 0 && (
-            <button className="clear-button" onClick={clearChat}>
+            <button type="button" className="clear-button" onClick={clearChat}>
               Clear chat
             </button>
           )}

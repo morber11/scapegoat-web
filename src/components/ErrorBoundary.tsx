@@ -30,7 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 <div className="error-boundary">
                     <h2 className="error-boundary__title">Something went wrong</h2>
                     <p className="error-boundary__message">{this.state.error.message}</p>
-                    <button className="error-boundary__button" onClick={this.handleReset}>
+                    <button type="button" className="error-boundary__button" onClick={this.handleReset}>
                         Try again
                     </button>
                 </div>

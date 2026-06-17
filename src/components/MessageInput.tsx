@@ -56,6 +56,7 @@ export function MessageInput({ onSend, disabled }: Props) {
         aria-label="Message input"
       />
       <button
+        type="button"
         className="message-input-send"
         onClick={submit}
         disabled={!canSend}
