@@ -2,6 +2,7 @@ import { useCallback, useReducer, useRef } from 'react';
 import { sendChatMessage, ChatApiError } from '../api/chatApi';
 import type { ChatMessage } from '../types/chat';
 import { FALLBACK_REPLIES, RATE_LIMIT_FALLBACK_REPLIES } from '../constants/constants';
+import { styleFallback } from '../utils/styleFallback';
 
 const STORAGE_KEY = 'scapegoat_chat_v1';
 const STORAGE_VERSION = 1;
@@ -66,27 +67,6 @@ function randomRateLimitFallback(): string {
     lastRateLimitFallback = reply;
 
     return reply;
-}
-
-// roughly guess the users typing style and transform the prompts to match
-function styleFallback(reply: string, messages: ChatMessage[]): string {
-    const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content ?? '';
-    let styled = reply;
-
-    const letterCounts = { lower: 0, upper: 0 };
-    for (const ch of lastUser) {
-        if (/[a-z]/.test(ch)) letterCounts.lower++;
-        else if (/[A-Z]/.test(ch)) letterCounts.upper++;
-    }
-    if (letterCounts.lower > letterCounts.upper) {
-        styled = styled.toLowerCase();
-    }
-
-    if (lastUser.trim().endsWith('.') && !/[.!?]$/.test(styled)) {
-        styled = styled + '.';
-    }
-
-    return styled;
 }
 
 type Action =
@@ -171,7 +151,7 @@ export function useChat(): UseChatReturn {
                     rawReply = randomFallback();
                 }
 
-                const styled = styleFallback(rawReply, historySnapshot);
+                const styled = styleFallback(rawReply, messagesRef.current);
                 const fallback = createMessage('assistant', styled);
                 dispatch({ type: 'SEND_SUCCESS', assistantMessage: fallback });
                 messagesRef.current = [...messagesRef.current, fallback];
