@@ -10,6 +10,27 @@ const RaceStatus = {
     Timeout: 'timeout',
 } as const;
 
+const ActionType = {
+    SendStart: 'SEND_START',
+    SendSuccess: 'SEND_SUCCESS',
+    AnimationDone: 'ANIMATION_DONE',
+    Clear: 'CLEAR',
+} as const;
+
+const Role = {
+    User: 'user',
+    Assistant: 'assistant',
+} as const;
+
+const Status = {
+    Idle: 'idle',
+    Sending: 'sending',
+} as const;
+
+const TIMEOUT_BASE = 4000;
+const TIMEOUT_JITTER = 2000;
+const RATE_LIMIT_STATUS = 429;
+
 const STORAGE_KEY = 'scapegoat_chat_v1';
 const STORAGE_VERSION = 1;
 
@@ -45,7 +66,7 @@ function saveToStorage(messages: ChatMessage[]): void {
 
 interface State {
     messages: ChatMessage[];
-    status: 'idle' | 'sending';
+    status: (typeof Status)[keyof typeof Status];
     animatingId: string | null;
 }
 
@@ -76,33 +97,33 @@ function randomRateLimitFallback(): string {
 }
 
 type Action =
-    | { type: 'SEND_START'; userMessage: ChatMessage }
-    | { type: 'SEND_SUCCESS'; assistantMessage: ChatMessage }
-    | { type: 'ANIMATION_DONE' }
-    | { type: 'CLEAR' };
+    | { type: typeof ActionType.SendStart; userMessage: ChatMessage }
+    | { type: typeof ActionType.SendSuccess; assistantMessage: ChatMessage }
+    | { type: typeof ActionType.AnimationDone }
+    | { type: typeof ActionType.Clear };
 
 function reducer(state: State, action: Action): State {
     switch (action.type) {
-        case 'SEND_START':
+        case ActionType.SendStart:
             return {
                 ...state,
                 messages: [...state.messages, action.userMessage],
-                status: 'sending',
+                status: Status.Sending,
                 animatingId: null,
             };
-        case 'SEND_SUCCESS':
+        case ActionType.SendSuccess:
             return {
                 ...state,
                 messages: [...state.messages, action.assistantMessage],
-                status: 'idle',
+                status: Status.Idle,
                 animatingId: action.assistantMessage.id,
             };
-        case 'ANIMATION_DONE':
+        case ActionType.AnimationDone:
             return { ...state, animatingId: null };
-        case 'CLEAR':
+        case ActionType.Clear:
             return {
                 messages: [],
-                status: 'idle',
+                status: Status.Idle,
                 animatingId: null,
             };
     }
@@ -124,7 +145,7 @@ export interface UseChatReturn {
 export function useChat(): UseChatReturn {
     const [state, dispatch] = useReducer(reducer, undefined, () => ({
         messages: loadFromStorage(),
-        status: 'idle' as const,
+        status: Status.Idle,
         animatingId: null,
     }));
 
@@ -133,9 +154,9 @@ export function useChat(): UseChatReturn {
     const sendMessage = useCallback(
         async (content: string) => {
             const historySnapshot = [...messagesRef.current];
-            const userMessage = createMessage('user', content);
+            const userMessage = createMessage(Role.User, content);
 
-            dispatch({ type: 'SEND_START', userMessage });
+            dispatch({ type: ActionType.SendStart, userMessage });
             messagesRef.current = [...historySnapshot, userMessage];
 
             saveToStorage(messagesRef.current);
@@ -151,31 +172,31 @@ export function useChat(): UseChatReturn {
                     setTimeout(() => {
                         resolve({ status: RaceStatus.Timeout });
                         controller.abort();
-                    }, 4000 + Math.random() * 2000),
+                    }, TIMEOUT_BASE + Math.random() * TIMEOUT_JITTER),
                 ),
             ]);
 
             if (result.status === RaceStatus.Ok) {
-                const assistantMessage = createMessage('assistant', result.reply);
-                dispatch({ type: 'SEND_SUCCESS', assistantMessage });
+                const assistantMessage = createMessage(Role.Assistant, result.reply);
+                dispatch({ type: ActionType.SendSuccess, assistantMessage });
                 messagesRef.current = [...messagesRef.current, assistantMessage];
 
                 saveToStorage(messagesRef.current);
             } else {
-                console.error('[Scapegoat] API error:', result.status === RaceStatus.Timeout ? 'timed out' : result.err);
+                console.error('[Scapegoat] API error:', result.status === RaceStatus.Timeout ? 'request timed out' : result.err);
 
                 let rawReply: string;
-                if (result.status === RaceStatus.Error 
-                    && result.err instanceof ChatApiError 
-                    && result.err.status === 429) {
+                if (result.status === RaceStatus.Error
+                    && result.err instanceof ChatApiError
+                    && result.err.status === RATE_LIMIT_STATUS) {
                     rawReply = randomRateLimitFallback();
                 } else {
                     rawReply = randomFallback();
                 }
 
                 const styled = styleFallback(rawReply, messagesRef.current);
-                const fallback = createMessage('assistant', styled);
-                dispatch({ type: 'SEND_SUCCESS', assistantMessage: fallback });
+                const fallback = createMessage(Role.Assistant, styled);
+                dispatch({ type: ActionType.SendSuccess, assistantMessage: fallback });
                 messagesRef.current = [...messagesRef.current, fallback];
 
                 saveToStorage(messagesRef.current);
@@ -185,19 +206,19 @@ export function useChat(): UseChatReturn {
     );
 
     const clearChat = useCallback(() => {
-        dispatch({ type: 'CLEAR' });
+        dispatch({ type: ActionType.Clear });
         messagesRef.current = [];
         saveToStorage([]);
     }, []);
 
     const onAnimationDone = useCallback(() => {
-        dispatch({ type: 'ANIMATION_DONE' });
+        dispatch({ type: ActionType.AnimationDone });
     }, []);
 
 
     return {
         messages: state.messages,
-        isSending: state.status === 'sending',
+        isSending: state.status === Status.Sending,
         animatingId: state.animatingId,
         sendMessage,
         clearChat,
