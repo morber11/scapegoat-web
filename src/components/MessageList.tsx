@@ -1,5 +1,4 @@
-import { useEffect, useImperativeHandle, useRef } from 'react';
-import type { Ref } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ChatMessage } from '../types/chat';
 import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
@@ -12,20 +11,10 @@ interface Props {
     forceScrollHint?: number;
 }
 
-export interface MessageListHandle {
-    scrollToBottom: (behavior?: ScrollBehavior) => void;
-}
-
-export const MessageList = ({ messages, isSending, animatingId, onAnimationDone, forceScrollHint, ref }: Props & { ref?: Ref<MessageListHandle> }) => {
+export const MessageList = ({ messages, isSending, animatingId, onAnimationDone, forceScrollHint }: Props) => {
     const bottomRef = useRef<HTMLDivElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
     const userScrolledRef = useRef(false);
-
-    const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
-        bottomRef.current?.scrollIntoView({ behavior });
-    };
-
-    useImperativeHandle(ref, () => ({ scrollToBottom }));
 
     // needed for handling scroll
     useEffect(() => {

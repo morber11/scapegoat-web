@@ -4,12 +4,6 @@ import type { ChatMessage } from '../types/chat';
 import { FALLBACK_REPLIES, RATE_LIMIT_FALLBACK_REPLIES } from '../constants/constants';
 import { styleFallback } from '../utils/styleFallback';
 
-const RaceStatus = {
-    Ok: 'ok',
-    Error: 'error',
-    Timeout: 'timeout',
-} as const;
-
 const ActionType = {
     SendStart: 'SEND_START',
     SendSuccess: 'SEND_SUCCESS',
@@ -27,8 +21,6 @@ const Status = {
     Sending: 'sending',
 } as const;
 
-const TIMEOUT_BASE = 4000;
-const TIMEOUT_JITTER = 2000;
 const RATE_LIMIT_STATUS = 429;
 
 const STORAGE_KEY = 'scapegoat_chat_v1';
@@ -161,34 +153,18 @@ export function useChat(): UseChatReturn {
 
             saveToStorage(messagesRef.current);
 
-            const controller = new AbortController();
-
-            // abort after fuzzy 4 - 6 seconds and use fallback messages, much snappier
-            const result = await Promise.race([
-                sendChatMessage(content, historySnapshot, controller.signal)
-                    .then((r) => ({ status: RaceStatus.Ok, reply: r.reply }))
-                    .catch((err) => ({ status: RaceStatus.Error, err })),
-                new Promise<{ status: typeof RaceStatus.Timeout }>((resolve) =>
-                    setTimeout(() => {
-                        resolve({ status: RaceStatus.Timeout });
-                        controller.abort();
-                    }, TIMEOUT_BASE + Math.random() * TIMEOUT_JITTER),
-                ),
-            ]);
-
-            if (result.status === RaceStatus.Ok) {
-                const assistantMessage = createMessage(Role.Assistant, result.reply);
+            try {
+                const reply = await sendChatMessage(content, historySnapshot);
+                const assistantMessage = createMessage(Role.Assistant, reply);
                 dispatch({ type: ActionType.SendSuccess, assistantMessage });
                 messagesRef.current = [...messagesRef.current, assistantMessage];
 
                 saveToStorage(messagesRef.current);
-            } else {
-                console.error('[Scapegoat] API error:', result.status === RaceStatus.Timeout ? 'request timed out' : result.err);
+            } catch (err) {
+                console.error('[Scapegoat] API error:', err);
 
                 let rawReply: string;
-                if (result.status === RaceStatus.Error
-                    && result.err instanceof ChatApiError
-                    && result.err.status === RATE_LIMIT_STATUS) {
+                if (err instanceof ChatApiError && err.status === RATE_LIMIT_STATUS) {
                     rawReply = randomRateLimitFallback();
                 } else {
                     rawReply = randomFallback();

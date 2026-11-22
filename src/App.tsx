@@ -1,8 +1,7 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useChat } from './hooks/useChat';
 import { MessageInput } from './components/MessageInput';
 import { MessageList } from './components/MessageList';
-import type { MessageListHandle } from './components/MessageList';
 import './App.css';
 
 function App() {
@@ -14,8 +13,6 @@ function App() {
         clearChat,
         onAnimationDone,
     } = useChat();
-
-    const listRef = useRef<MessageListHandle>(null);
 
     const [scrollHint, setScrollHint] = useState(0);
 
@@ -49,7 +46,6 @@ function App() {
 
             <div className="chat-body">
                 <MessageList
-                    ref={listRef}
                     messages={messages}
                     isSending={isSending}
                     animatingId={animatingId}

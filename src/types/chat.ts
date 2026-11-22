@@ -12,7 +12,7 @@ export interface ApiMessage {
   content: string;
 }
 
-export interface ApiChatResponse {
-  messages?: ApiMessage[];
-  reply?: string;
-}
+export type ApiChatEvent =
+  | { type: 'processing' }
+  | { type: 'reply'; messages: ApiMessage[] }
+  | { type: 'error'; status: number; detail: string };
